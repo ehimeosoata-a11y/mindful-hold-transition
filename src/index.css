@@ -54,6 +54,13 @@ All colors MUST be HSL.
     --wave-speed: 5s;
     --wave-opacity: 0.8;
     --glass-border: rgba(255, 255, 255, 0.05);
+  }
+
+  /* Triage: alert → crimson heartbeat palette (3s eased via body transition) */
+  :root[data-triage="alert"] {
+    --wave-color: #EF4444;
+    --wave-color-2: #F87171;
+    --wave-speed: 1.6s;
 
     --sidebar-background: 0 0% 98%;
 

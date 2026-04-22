@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import ResilienceWave from "./ResilienceWave";
+import ResilienceWave, { type TriageState } from "./ResilienceWave";
 
 type Message = { from: "haven" | "you"; text: string };
 
@@ -12,6 +12,7 @@ const initialMessages: Message[] = [
 const SafeHavenChat = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [draft, setDraft] = useState("");
+  const [triage, setTriage] = useState<TriageState>("calm");
 
   const send = () => {
     const text = draft.trim();
@@ -52,13 +53,20 @@ const SafeHavenChat = () => {
 
           <button
             type="button"
-            aria-label="Profile"
-            className="w-9 h-9 rounded-full glass-panel flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={`Triage: ${triage}. Tap to toggle.`}
+            onClick={() => setTriage((s) => (s === "calm" ? "alert" : "calm"))}
+            className="px-3 h-9 rounded-full glass-panel flex items-center gap-2 text-[10px] tracking-[0.25em] uppercase text-foreground/80 hover:text-foreground transition-colors"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
-            </svg>
+            <span
+              aria-hidden
+              className="w-1.5 h-1.5 rounded-full"
+              style={{
+                background: "var(--wave-color)",
+                boxShadow: "0 0 8px var(--wave-color)",
+                transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+            />
+            {triage}
           </button>
         </header>
 
@@ -135,7 +143,7 @@ const SafeHavenChat = () => {
           }}
           aria-label="Resilience visualization"
         >
-          <ResilienceWave />
+          <ResilienceWave triageState={triage} />
         </section>
       </div>
     </motion.div>
