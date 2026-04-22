@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ResilienceWave, { type TriageState } from "./ResilienceWave";
 
 type Message = { from: "haven" | "you"; text: string };
@@ -13,6 +13,10 @@ const SafeHavenChat = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [draft, setDraft] = useState("");
   const [triage, setTriage] = useState<TriageState>("calm");
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-triage", triage);
+  }, [triage]);
 
   const send = () => {
     const text = draft.trim();
