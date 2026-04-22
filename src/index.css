@@ -8,35 +8,44 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Nexilo — Midnight Navy ritual environment */
+    --background: 222 67% 10%;
+    --foreground: 160 30% 92%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --nexilo-navy: 222 67% 10%;       /* #0A1128 */
+    --nexilo-navy-deep: 222 70% 7%;
+    --nexilo-emerald: 160 84% 39%;    /* #10B981 */
+    --nexilo-emerald-glow: 160 84% 55%;
+    --nexilo-mist: 160 20% 88%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --pulse-color: 160 84% 39%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --card: 222 60% 13%;
+    --card-foreground: 160 30% 92%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --popover: 222 60% 13%;
+    --popover-foreground: 160 30% 92%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 222 67% 10%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --secondary: 222 50% 18%;
+    --secondary-foreground: 160 30% 92%;
+
+    --muted: 222 40% 16%;
+    --muted-foreground: 160 15% 65%;
+
+    --accent: 160 84% 39%;
+    --accent-foreground: 222 67% 10%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 222 40% 20%;
+    --input: 222 40% 20%;
+    --ring: 160 84% 39%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -101,5 +110,34 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
   }
+}
+
+@layer utilities {
+  .nexilo-bg {
+    background-color: hsl(var(--nexilo-navy));
+  }
+
+  .breathing-pulse {
+    background: radial-gradient(
+      circle at center,
+      hsla(var(--pulse-color) / 0.18) 0%,
+      hsla(var(--pulse-color) / 0.06) 35%,
+      transparent 70%
+    );
+  }
+
+  .ring-glow {
+    box-shadow:
+      0 0 40px hsla(var(--nexilo-emerald) / 0.25),
+      inset 0 0 20px hsla(var(--nexilo-emerald) / 0.1);
+  }
+}
+
+@keyframes nexilo-breathe {
+  0%, 100% { transform: scale(0.8); opacity: 0.7; }
+  50%      { transform: scale(1.2); opacity: 1; }
 }
