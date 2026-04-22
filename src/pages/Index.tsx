@@ -6,7 +6,7 @@ const Index = () => {
   const [arrived, setArrived] = useState(false);
 
   return (
-    <div className="min-h-screen nexilo-bg">
+    <div className="min-h-screen safe-haven-shell">
       {arrived ? <SafeHavenChat /> : <HapticSplash onComplete={() => setArrived(true)} />}
     </div>
   );
