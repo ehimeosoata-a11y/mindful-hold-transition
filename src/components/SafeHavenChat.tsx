@@ -1,60 +1,143 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
+import ResilienceWave from "./ResilienceWave";
 
-const messages = [
+type Message = { from: "haven" | "you"; text: string };
+
+const initialMessages: Message[] = [
   { from: "haven", text: "You arrived. Take a moment — there's no rush here." },
+  { from: "haven", text: "When you're ready, name one thing that's true right now." },
 ];
 
 const SafeHavenChat = () => {
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [draft, setDraft] = useState("");
+
+  const send = () => {
+    const text = draft.trim();
+    if (!text) return;
+    setMessages((m) => [...m, { from: "you", text }]);
+    setDraft("");
+  };
+
   return (
     <motion.div
-      className="min-h-screen nexilo-bg flex flex-col"
+      className="min-h-screen w-full flex justify-center safe-haven-shell"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
+      transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
     >
-      <header className="px-6 pt-8 pb-4 flex items-center justify-between border-b border-border/40">
-        <div className="flex flex-col">
-          <span className="text-foreground text-sm tracking-[0.3em]">NEXILO</span>
-          <span className="text-muted-foreground text-[10px] tracking-[0.25em] uppercase">
-            Safe Haven
-          </span>
-        </div>
-        <div
-          aria-hidden
-          className="w-2.5 h-2.5 rounded-full bg-primary"
-          style={{ boxShadow: "0 0 12px hsla(160, 84%, 55%, 0.7)" }}
-        />
-      </header>
+      {/* Mobile-first 480px shell */}
+      <div className="relative w-full max-w-[480px] min-h-screen flex flex-col">
+        {/* TOP — 10% : Minimal status header */}
+        <header
+          className="flex items-center justify-between px-6"
+          style={{ minHeight: "10vh", paddingTop: "max(env(safe-area-inset-top), 1.25rem)" }}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              aria-hidden
+              className="w-2 h-2 rounded-full"
+              style={{
+                background: "var(--wave-color)",
+                boxShadow: "0 0 10px var(--wave-color)",
+                transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 3s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+            />
+            <div className="flex flex-col leading-tight">
+              <span className="text-foreground text-[11px] font-medium tracking-[0.32em]">NEXILO</span>
+              <span className="text-muted-foreground text-[9px] tracking-[0.25em] uppercase">Safe Haven</span>
+            </div>
+          </div>
 
-      <main className="flex-1 px-6 py-8 flex flex-col gap-4 overflow-y-auto">
-        {messages.map((m, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 + i * 0.2, duration: 0.6 }}
-            className="max-w-[80%] rounded-2xl bg-card text-card-foreground px-4 py-3 text-sm leading-relaxed border border-border/40"
-          >
-            {m.text}
-          </motion.div>
-        ))}
-      </main>
-
-      <footer className="px-6 pb-8 pt-4 border-t border-border/40">
-        <div className="flex items-center gap-3 rounded-full bg-card border border-border/60 px-4 py-3">
-          <input
-            type="text"
-            placeholder="Say what's true right now…"
-            className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
-          />
           <button
             type="button"
-            className="text-xs tracking-[0.2em] uppercase text-primary hover:opacity-80 transition"
+            aria-label="Profile"
+            className="w-9 h-9 rounded-full glass-panel flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           >
-            Send
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
+            </svg>
           </button>
+        </header>
+
+        {/* MIDDLE — 60% : Narrative space */}
+        <main
+          className="flex-1 px-6 pt-2 pb-4 flex flex-col gap-3 overflow-y-auto"
+          style={{ minHeight: "60vh" }}
+        >
+          {messages.map((m, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i < initialMessages.length ? 0.4 + i * 0.25 : 0, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+              className={
+                m.from === "haven"
+                  ? "self-start max-w-[82%] rounded-2xl rounded-bl-md glass-panel px-4 py-3 text-[14px] leading-relaxed text-foreground/90"
+                  : "self-end max-w-[82%] rounded-2xl rounded-br-md px-4 py-3 text-[14px] leading-relaxed text-primary-foreground"
+              }
+              style={
+                m.from === "you"
+                  ? {
+                      background: "var(--wave-color)",
+                      transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    }
+                  : undefined
+              }
+            >
+              {m.text}
+            </motion.div>
+          ))}
+        </main>
+
+        {/* Composer sits above the visualization zone */}
+        <div className="px-6 pb-3 relative z-20">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              send();
+            }}
+            className="flex items-center gap-2 rounded-full glass-panel pl-5 pr-2 py-2"
+          >
+            <input
+              type="text"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Say what's true right now…"
+              className="flex-1 bg-transparent outline-none text-[14px] text-foreground placeholder:text-muted-foreground/70 py-1.5"
+            />
+            <button
+              type="submit"
+              aria-label="Send"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-primary-foreground transition-transform active:scale-95"
+              style={{
+                background: "var(--wave-color)",
+                transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14" />
+                <path d="m13 6 6 6-6 6" />
+              </svg>
+            </button>
+          </form>
         </div>
-      </footer>
+
+        {/* BOTTOM — 30% : Visualization zone (Resilience Wave) */}
+        <section
+          className="relative w-full overflow-hidden"
+          style={{
+            height: "30vh",
+            zIndex: 10,
+            paddingBottom: "env(safe-area-inset-bottom)",
+          }}
+          aria-label="Resilience visualization"
+        >
+          <ResilienceWave />
+        </section>
+      </div>
     </motion.div>
   );
 };
