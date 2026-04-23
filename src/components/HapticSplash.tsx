@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useTransform,
+  animate,
+} from "framer-motion";
 
 const HOLD_DURATION = 3000;
+const EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
+const IDLE_STROKE = "rgba(255, 255, 255, 0.2)";
+const ACTIVE_STROKE = "#10B981";
 
 interface HapticSplashProps {
   onComplete: () => void;
@@ -15,6 +24,14 @@ const HapticSplash = ({ onComplete }: HapticSplashProps) => {
 
   const startRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
+
+  // Motion values for color interpolation (separate from React state to avoid re-renders).
+  const colorProgress = useMotionValue(0);
+  const strokeColor = useTransform(
+    colorProgress,
+    [0, 1],
+    [IDLE_STROKE, ACTIVE_STROKE],
+  );
 
   const stopLoop = () => {
     if (rafRef.current !== null) {
@@ -51,6 +68,8 @@ const HapticSplash = ({ onComplete }: HapticSplashProps) => {
     setHolding(true);
     startRef.current = performance.now();
     rafRef.current = requestAnimationFrame(tick);
+    // Cubic-bezier interpolation of stroke color across the full 3s hold.
+    animate(colorProgress, 1, { duration: HOLD_DURATION / 1000, ease: EASE });
   };
 
   const handleRelease = () => {
@@ -60,6 +79,8 @@ const HapticSplash = ({ onComplete }: HapticSplashProps) => {
       setHolding(false);
       setProgress(0);
       setInterrupted(true);
+      // Quick 300ms fade back to muted grey-white — "connection lost".
+      animate(colorProgress, 0, { duration: 0.3, ease: EASE });
     }
   };
 
