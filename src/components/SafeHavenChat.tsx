@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ResilienceWave, { type TriageState } from "./ResilienceWave";
 
 type Message = { from: "haven" | "you"; text: string };
@@ -13,10 +13,31 @@ const SafeHavenChat = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [draft, setDraft] = useState("");
   const [triage, setTriage] = useState<TriageState>("calm");
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const narrativeRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-triage", triage);
   }, [triage]);
+
+  // Detect mobile keyboard via VisualViewport — protects the 10/60/30 ratio
+  // by collapsing the visualization zone instead of squishing it.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      const diff = window.innerHeight - vv.height;
+      setKeyboardOpen(diff > 150);
+    };
+    vv.addEventListener("resize", onResize);
+    return () => vv.removeEventListener("resize", onResize);
+  }, []);
+
+  // Auto-scroll narrative to bottom on new message
+  useEffect(() => {
+    const el = narrativeRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messages]);
 
   const send = () => {
     const text = draft.trim();
@@ -27,17 +48,25 @@ const SafeHavenChat = () => {
 
   return (
     <motion.div
-      className="min-h-screen w-full flex justify-center safe-haven-shell"
+      className="w-full flex justify-center nexilo-shell-bg"
+      style={{ minHeight: "100dvh" }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
     >
-      {/* Mobile-first 480px shell */}
-      <div className="relative w-full max-w-[480px] min-h-screen flex flex-col">
-        {/* TOP — 10% : Minimal status header */}
+      {/* Mobile-first 480px shell — strict 10 / 60 / 30 distribution */}
+      <div
+        className="relative w-full max-w-[480px] flex flex-col"
+        style={{ minHeight: "100dvh", height: "100dvh" }}
+      >
+        {/* TOP — 10% : Sticky minimal status header */}
         <header
-          className="flex items-center justify-between px-6"
-          style={{ minHeight: "10vh", paddingTop: "max(env(safe-area-inset-top), 1.25rem)" }}
+          className="sticky top-0 z-50 flex items-center justify-between px-6 nexilo-shell-bg"
+          style={{
+            flex: "0 0 10%",
+            minHeight: "64px",
+            paddingTop: "max(env(safe-area-inset-top), 0.75rem)",
+          }}
         >
           <div className="flex items-center gap-3">
             <span
@@ -74,10 +103,11 @@ const SafeHavenChat = () => {
           </button>
         </header>
 
-        {/* MIDDLE — 60% : Narrative space */}
+        {/* MIDDLE — 60% : Narrative space, masked + scrollable */}
         <main
-          className="flex-1 px-6 pt-2 pb-4 flex flex-col gap-3 overflow-y-auto"
-          style={{ minHeight: "60vh" }}
+          ref={narrativeRef}
+          className="px-6 pt-4 pb-4 flex flex-col gap-3 overflow-y-auto no-scrollbar narrative-mask"
+          style={{ flex: keyboardOpen ? "1 1 auto" : "0 0 60%" }}
         >
           {messages.map((m, i) => (
             <motion.div
@@ -139,10 +169,12 @@ const SafeHavenChat = () => {
 
         {/* BOTTOM — 30% : Visualization zone (Resilience Wave) */}
         <section
-          className="relative w-full overflow-hidden"
+          className="relative w-full overflow-hidden pointer-events-none"
           style={{
-            height: "30vh",
-            zIndex: 10,
+            flex: keyboardOpen ? "0 0 0px" : "0 0 30%",
+            zIndex: 0,
+            opacity: keyboardOpen ? 0 : 1,
+            transition: "flex-basis 0.35s ease, opacity 0.35s ease",
             paddingBottom: "env(safe-area-inset-bottom)",
           }}
           aria-label="Resilience visualization"
