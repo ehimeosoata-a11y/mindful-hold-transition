@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { Lock, Settings2, Flame, ShieldCheck } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import ResilienceWave, { type TriageState } from "./ResilienceWave";
 import HistoricalPulse, { type PulseDatum } from "./HistoricalPulse";
 
@@ -27,6 +29,10 @@ const SafeHavenChat = () => {
   const [draft, setDraft] = useState("");
   const [triage, setTriage] = useState<TriageState>("calm");
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [burnConfirmOpen, setBurnConfirmOpen] = useState(false);
+  const [burning, setBurning] = useState(false);
+  const [burned, setBurned] = useState(false);
   const narrativeRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
