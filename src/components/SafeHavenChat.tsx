@@ -186,6 +186,29 @@ const SafeHavenChat = () => {
           className="px-6 pt-4 pb-4 flex flex-col gap-3 overflow-y-auto no-scrollbar narrative-mask"
           style={{ flex: keyboardOpen ? "1 1 auto" : "0 0 60%" }}
         >
+          {burned ? (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+              className="m-auto text-center px-6"
+            >
+              <div
+                className="mx-auto mb-3 w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+              >
+                <Lock className="w-4 h-4 text-foreground/60" strokeWidth={1.75} />
+              </div>
+              <p className="text-[13px] leading-relaxed text-foreground/70">
+                Your narrative space has been cleared and encrypted.
+              </p>
+            </motion.div>
+          ) : (
+          <motion.div
+            className="contents"
+            animate={{ opacity: burning ? 0 : 1 }}
+            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          >
           {messages.map((m, i) => (
             <motion.div
               key={i}
@@ -228,6 +251,8 @@ const SafeHavenChat = () => {
             </div>
             <HistoricalPulse data={samplePulse} />
           </motion.div>
+          </motion.div>
+          )}
         </main>
 
         {/* Composer sits above the visualization zone */}
