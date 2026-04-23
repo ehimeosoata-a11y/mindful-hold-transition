@@ -79,6 +79,13 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
+  /* Triage: crisis → deep crimson, fastest cadence */
+  :root[data-triage="crisis"] {
+    --wave-color: #DC2626;
+    --wave-color-2: #F87171;
+    --wave-speed: 1.2s;
+  }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
