@@ -303,6 +303,128 @@ const SafeHavenChat = () => {
           <ResilienceWave triageState={triage} />
         </section>
       </div>
+
+      {/* Settings drawer */}
+      <AnimatePresence>
+        {settingsOpen && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-end justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div
+              className="absolute inset-0"
+              style={{ background: "rgba(10,17,40,0.55)", backdropFilter: "blur(4px)" }}
+              onClick={() => setSettingsOpen(false)}
+            />
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+              className="relative w-full max-w-[480px] mx-auto rounded-t-3xl glass-panel p-6"
+              style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
+            >
+              <div className="mx-auto mb-4 w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.12)" }} />
+              <h2 className="text-[11px] tracking-[0.32em] uppercase text-foreground/80 mb-4">Settings</h2>
+
+              <div className="flex items-center justify-between py-3">
+                <div className="flex items-start gap-3">
+                  <Flame className="w-4 h-4 mt-0.5 text-foreground/70" strokeWidth={1.75} />
+                  <div>
+                    <div className="text-[13px] text-foreground/90">Burn Narrative History</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5 max-w-[260px]">
+                      Permanently clear this session's narrative. Encryption keys rotated.
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBurnConfirmOpen(true)}
+                  aria-label="Burn narrative history"
+                  className="px-3 h-8 rounded-full text-[10px] tracking-[0.22em] uppercase transition-colors"
+                  style={{
+                    background: "rgba(220, 38, 38, 0.12)",
+                    border: "1px solid rgba(220, 38, 38, 0.35)",
+                    color: "#FCA5A5",
+                  }}
+                >
+                  Burn
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Burn confirmation */}
+      <AnimatePresence>
+        {burnConfirmOpen && (
+          <motion.div
+            className="fixed inset-0 z-[110] flex items-center justify-center px-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div
+              className="absolute inset-0"
+              style={{ background: "rgba(10,17,40,0.7)", backdropFilter: "blur(6px)" }}
+              onClick={() => setBurnConfirmOpen(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              className="relative w-full max-w-[360px] rounded-2xl glass-panel p-6 text-center"
+            >
+              <div
+                className="mx-auto mb-3 w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(220,38,38,0.12)", border: "1px solid rgba(220,38,38,0.3)" }}
+              >
+                <Flame className="w-4 h-4" style={{ color: "#FCA5A5" }} strokeWidth={1.75} />
+              </div>
+              <h3 className="text-[14px] text-foreground/90 mb-2">Burn this narrative?</h3>
+              <p className="text-[12px] text-muted-foreground mb-5 leading-relaxed">
+                This action is irreversible. Your messages will be cryptographically destroyed.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBurnConfirmOpen(false)}
+                  className="flex-1 h-10 rounded-full text-[12px] tracking-[0.18em] uppercase glass-panel text-foreground/80"
+                >
+                  Keep
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBurnConfirmOpen(false);
+                    setBurning(true);
+                    window.setTimeout(() => {
+                      setMessages([]);
+                      setBurned(true);
+                      setBurning(false);
+                      setSettingsOpen(false);
+                    }, 500);
+                  }}
+                  className="flex-1 h-10 rounded-full text-[12px] tracking-[0.18em] uppercase"
+                  style={{
+                    background: "rgba(220, 38, 38, 0.18)",
+                    border: "1px solid rgba(220, 38, 38, 0.45)",
+                    color: "#FCA5A5",
+                  }}
+                >
+                  Burn
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
