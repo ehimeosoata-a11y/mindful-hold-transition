@@ -1,12 +1,25 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import ResilienceWave, { type TriageState } from "./ResilienceWave";
+import HistoricalPulse, { type PulseDatum } from "./HistoricalPulse";
 
 type Message = { from: "haven" | "you"; text: string };
 
 const initialMessages: Message[] = [
   { from: "haven", text: "You arrived. Take a moment — there's no rush here." },
   { from: "haven", text: "When you're ready, name one thing that's true right now." },
+];
+
+// Demo: last 7 days of triage scores — a gentle arc from crisis → steady,
+// so the "Constant Thread" reads as a story of recovery.
+const samplePulse: PulseDatum[] = [
+  { day: "MON", score: 0.42, state: "Crisis",   date: "Mon · Apr 17" },
+  { day: "TUE", score: 0.55, state: "Elevated", date: "Tue · Apr 18" },
+  { day: "WED", score: 0.48, state: "Crisis",   date: "Wed · Apr 19" },
+  { day: "THU", score: 0.67, state: "Elevated", date: "Thu · Apr 20" },
+  { day: "FRI", score: 0.74, state: "Elevated", date: "Fri · Apr 21" },
+  { day: "SAT", score: 0.83, state: "Steady",   date: "Sat · Apr 22" },
+  { day: "SUN", score: 0.88, state: "Steady",   date: "Sun · Apr 23" },
 ];
 
 const SafeHavenChat = () => {
