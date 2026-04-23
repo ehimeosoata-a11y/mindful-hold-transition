@@ -86,9 +86,9 @@ const HapticSplash = ({ onComplete }: HapticSplashProps) => {
 
   useEffect(() => () => stopLoop(), []);
 
-  // SVG ring math
-  const size = 220;
-  const stroke = 4;
+  // SVG ring math — 64px Holding Anchor per spec.
+  const size = 64;
+  const stroke = 3;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference * (1 - progress);
@@ -114,16 +114,23 @@ const HapticSplash = ({ onComplete }: HapticSplashProps) => {
           /* parent handles unmount via onComplete */
         }}
       >
-        {/* Breathing radial gradient */}
+        {/* The Lungs — large blurred radial gradient breathing in 3s loop. */}
         <motion.div
           aria-hidden
-          className="absolute inset-0 breathing-pulse pointer-events-none"
-          animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.7, 1, 0.7] }}
+          className="absolute pointer-events-none rounded-full"
+          style={{
+            width: 480,
+            height: 480,
+            background:
+              "radial-gradient(circle, rgba(16,185,129,0.22) 0%, rgba(16,185,129,0.06) 40%, rgba(16,185,129,0) 70%)",
+            filter: "blur(40px)",
+          }}
+          animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.55, 0.9, 0.55] }}
           transition={{ duration: 3, ease: "easeInOut", repeat: Infinity }}
         />
 
-        {/* Holding Anchor */}
-        <div
+        {/* Holding Anchor — 64px circle */}
+        <motion.div
           role="button"
           aria-label="Hold for three seconds"
           tabIndex={0}
@@ -131,66 +138,52 @@ const HapticSplash = ({ onComplete }: HapticSplashProps) => {
           onPointerUp={handleRelease}
           onPointerCancel={handleRelease}
           onPointerLeave={handleRelease}
-          className="relative ring-glow rounded-full cursor-pointer touch-none"
+          className="relative rounded-full cursor-pointer touch-none"
           style={{ width: size, height: size }}
+          animate={{ scale: completed ? 1.35 : 1 }}
+          transition={{ duration: 0.6, ease: EASE }}
         >
-          {/* Inner soft glow disc */}
-          <motion.div
-            className="absolute inset-3 rounded-full"
-            style={{
-              background:
-                "radial-gradient(circle, hsla(160, 84%, 50%, 0.35) 0%, hsla(160, 84%, 39%, 0.05) 70%)",
-            }}
-            animate={{
-              scale: holding ? [1, 1.06, 1] : 1,
-              opacity: holding ? 1 : 0.85,
-            }}
-            transition={{
-              duration: 1.2,
-              repeat: holding ? Infinity : 0,
-              ease: "easeInOut",
-            }}
-          />
-
-          {/* Progress ring */}
-          <svg
+          {/* Progress ring — interpolated stroke color, glow on completion */}
+          <motion.svg
             width={size}
             height={size}
             className="absolute inset-0 -rotate-90"
+            style={{
+              filter: completed
+                ? "drop-shadow(0 0 10px #10B981)"
+                : "drop-shadow(0 0 0px rgba(16,185,129,0))",
+              transition: "filter 400ms cubic-bezier(0.4,0,0.2,1)",
+            }}
             aria-hidden
           >
+            {/* Idle track — full circle in muted grey-white */}
             <circle
               cx={size / 2}
               cy={size / 2}
               r={radius}
               fill="none"
-              stroke="hsla(160, 30%, 92%, 0.08)"
+              stroke={IDLE_STROKE}
               strokeWidth={stroke}
             />
-            <circle
+            {/* Active progress — fills clockwise, color interpolates grey→emerald */}
+            <motion.circle
               cx={size / 2}
               cy={size / 2}
               r={radius}
               fill="none"
-              stroke="hsl(var(--nexilo-emerald))"
+              stroke={strokeColor}
               strokeWidth={stroke}
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={dashOffset}
               style={{
-                filter: "drop-shadow(0 0 8px hsla(160, 84%, 55%, 0.6))",
-                transition: holding ? "none" : "stroke-dashoffset 0.4s ease-out",
+                transition: holding
+                  ? "none"
+                  : "stroke-dashoffset 300ms cubic-bezier(0.4,0,0.2,1)",
               }}
             />
-          </svg>
-
-          {/* Center label */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-foreground/80 text-sm tracking-[0.3em] uppercase">
-              {completed ? "Arriving" : holding ? "Hold" : "Press"}
-            </span>
-          </div>
-        </div>
+          </motion.svg>
+        </motion.div>
 
         {/* Brand + instruction */}
         <div className="absolute top-[14%] flex flex-col items-center gap-2">
