@@ -14,7 +14,7 @@ import { motion } from "framer-motion";
  * • triageState morphs the wave (emerald swell ↔ crimson heartbeat) over 3s
  */
 
-export type TriageState = "calm" | "alert";
+export type TriageState = "calm" | "alert" | "crisis";
 
 interface ResilienceWaveProps {
   triageState?: TriageState;
@@ -36,6 +36,8 @@ const STATE_PRESETS: Record<
   calm: { amplitude: 22, frequency: 1.4, speed: 0.6 },
   // Tight, urgent crimson heartbeat
   alert: { amplitude: 34, frequency: 4.2, speed: 2.4 },
+  // Crisis — sharper, faster, urgent
+  crisis: { amplitude: 40, frequency: 5.0, speed: 3.0 },
 };
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
