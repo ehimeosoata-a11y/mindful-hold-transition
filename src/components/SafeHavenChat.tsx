@@ -145,6 +145,25 @@ const SafeHavenChat = () => {
               {m.text}
             </motion.div>
           ))}
+
+          {/* The Constant Thread — 7-day historical pulse */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.1, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+            className="mt-2 rounded-2xl glass-panel px-3 py-3"
+            style={{ pointerEvents: "auto" }}
+          >
+            <div className="px-2 pb-2 flex items-center justify-between">
+              <span className="text-[10px] tracking-[0.28em] uppercase text-muted-foreground">
+                The Constant Thread
+              </span>
+              <span className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground/70">
+                7 days
+              </span>
+            </div>
+            <HistoricalPulse data={samplePulse} />
+          </motion.div>
         </main>
 
         {/* Composer sits above the visualization zone */}
