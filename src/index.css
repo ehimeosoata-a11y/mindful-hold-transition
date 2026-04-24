@@ -58,8 +58,8 @@ All colors MUST be HSL.
 
   /* Triage: alert → crimson heartbeat palette (3s eased via body transition) */
   :root[data-triage="alert"] {
-    --wave-color: #EF4444;
-    --wave-color-2: #F87171;
+    --wave-color: #FFB84D;
+    --wave-color-2: #FFD08A;
     --wave-speed: 1.6s;
 
     --sidebar-background: 0 0% 98%;
@@ -81,9 +81,9 @@ All colors MUST be HSL.
 
   /* Triage: crisis → deep crimson, fastest cadence */
   :root[data-triage="crisis"] {
-    --wave-color: #DC2626;
-    --wave-color-2: #F87171;
-    --wave-speed: 1.2s;
+    --wave-color: #701A75;
+    --wave-color-2: #9D2EA3;
+    --wave-speed: 6s;
   }
 
   .dark {
