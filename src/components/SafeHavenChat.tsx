@@ -85,7 +85,7 @@ const SafeHavenChat = () => {
         className="relative w-full max-w-[480px] flex flex-col"
         style={{ minHeight: "100dvh", height: "100dvh" }}
       >
-        {/* TOP — 10% : Sticky minimal status header */}
+        {/* TOP — 10% : Evolutionary Header. Brand left, trust+status grouped right. */}
         <header
           className="sticky top-0 z-50 flex items-center justify-between px-6 nexilo-shell-bg"
           style={{
@@ -94,69 +94,76 @@ const SafeHavenChat = () => {
             paddingTop: "max(env(safe-area-inset-top), 0.75rem)",
           }}
         >
-          <div className="flex items-center gap-3">
-            <span
-              aria-hidden
-              className="w-2 h-2 rounded-full"
-              style={{
-                background: "var(--wave-color)",
-                boxShadow: "0 0 10px var(--wave-color)",
-                transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 3s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}
-            />
-            <div className="flex flex-col leading-tight">
-              <span className="text-foreground text-[11px] font-medium tracking-[0.32em]">NEXILO</span>
-              <span className="text-muted-foreground text-[9px] tracking-[0.25em] uppercase">Safe Haven</span>
-            </div>
+          {/* LEFT — Brand pinned left */}
+          <div className="flex flex-col leading-tight">
+            <span className="text-foreground text-[12px] font-medium tracking-[0.42em]">NEXILO</span>
+            <span className="text-muted-foreground text-[9px] tracking-[0.28em] uppercase">Safe Haven</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* NDPR Trust Badge — pill, semi-transparent, padlock + residency */}
-            <div
-              className="hidden sm:flex items-center gap-1.5 h-7 pl-2 pr-3 rounded-full"
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                backdropFilter: "blur(4px)",
-                WebkitBackdropFilter: "blur(4px)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
-              aria-label="NDPR Encrypted, Lagos data residency"
-            >
-              <Lock className="w-3 h-3 text-foreground/70" strokeWidth={1.75} />
-              <span className="text-[9px] font-light tracking-[0.18em] uppercase text-foreground/70">
-                NDPR Encrypted · Lagos
-              </span>
-            </div>
-
+          {/* RIGHT — NDPR badge + status dot, grouped tightly. Airy navy in the center. */}
+          <div className="flex items-center gap-1.5">
+            {/* Sparkline drawer toggle */}
             <button
               type="button"
-              aria-label={`Triage: ${triage}. Tap to cycle.`}
+              aria-label={pulseOpen ? "Close historical pulse" : "Open historical pulse"}
+              aria-expanded={pulseOpen}
+              disabled={inputFocused}
+              onClick={() => setPulseOpen((v) => !v)}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <Activity className="w-3.5 h-3.5" strokeWidth={1.75} />
+            </button>
+
+            {/* NDPR + status dot — grouped into one pill for tight visual unity */}
+            <button
+              type="button"
+              aria-label={`NDPR Encrypted · Lagos. Triage: ${triage}. Tap to cycle.`}
               onClick={() =>
                 setTriage((s) =>
                   s === "calm" ? "alert" : s === "alert" ? "crisis" : "calm",
                 )
               }
-              className="px-3 h-9 rounded-full glass-panel flex items-center gap-2 text-[10px] tracking-[0.25em] uppercase text-foreground/80 hover:text-foreground transition-colors"
+              className="flex items-center gap-2 h-8 pl-2.5 pr-3 rounded-full transition-colors"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                backdropFilter: "blur(4px)",
+                WebkitBackdropFilter: "blur(4px)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
             >
+              <Lock className="w-3 h-3 text-foreground/60" strokeWidth={1.75} />
+              <span className="text-[9px] font-light tracking-[0.22em] uppercase text-foreground/65">
+                NDPR · Lagos
+              </span>
               <span
                 aria-hidden
-                className="w-1.5 h-1.5 rounded-full"
+                className="ml-1 w-1.5 h-1.5 rounded-full"
                 style={{
                   background: "var(--wave-color)",
                   boxShadow: "0 0 8px var(--wave-color)",
-                  transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 3s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               />
-              {triage}
+              <span className="text-[9px] tracking-[0.24em] uppercase text-foreground/70">
+                {triage}
+              </span>
             </button>
 
             <button
               type="button"
               aria-label="Open settings"
               onClick={() => setSettingsOpen(true)}
-              className="w-9 h-9 rounded-full glass-panel flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
             >
-              <Settings2 className="w-4 h-4" strokeWidth={1.75} />
+              <Settings2 className="w-3.5 h-3.5" strokeWidth={1.75} />
             </button>
           </div>
         </header>
