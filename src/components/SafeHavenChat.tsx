@@ -257,53 +257,137 @@ const SafeHavenChat = () => {
           )}
         </main>
 
-        {/* Composer sits above the visualization zone */}
-        <div className="px-6 pb-3 relative z-20">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              send();
-            }}
-            className="flex items-center gap-2 rounded-full glass-panel pl-5 pr-2 py-2"
-          >
-            <input
-              type="text"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Say what's true right now…"
-              className="flex-1 bg-transparent outline-none text-[14px] text-foreground placeholder:text-muted-foreground/70 py-1.5"
-            />
-            <button
-              type="submit"
-              aria-label="Send"
-              className="w-9 h-9 rounded-full flex items-center justify-center text-primary-foreground transition-transform active:scale-95"
-              style={{
-                background: "var(--wave-color)",
-                transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease",
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14" />
-                <path d="m13 6 6 6-6 6" />
-              </svg>
-            </button>
-          </form>
-        </div>
-
-        {/* BOTTOM — 30% : Visualization zone (Resilience Wave) */}
+        {/* BOTTOM LAYERS — Wave (z-0) and Floating Input (z-10), both pinned to bottom */}
         <section
-          className="relative w-full overflow-hidden pointer-events-none"
+          className="relative w-full"
           style={{
-            flex: keyboardOpen ? "0 0 0px" : "0 0 30%",
-            zIndex: 0,
-            opacity: keyboardOpen ? 0 : 1,
-            transition: "flex-basis 0.35s ease, opacity 0.35s ease",
+            flex: keyboardOpen ? "0 0 96px" : "0 0 30%",
+            transition: "flex-basis 0.35s ease",
             paddingBottom: "env(safe-area-inset-bottom)",
           }}
-          aria-label="Resilience visualization"
+          aria-label="Resilience visualization and composer"
         >
-          <ResilienceWave triageState={triage} />
+          {/* Z-0 — Resilience Wave, pointer-events-none so it never blocks input */}
+          <div
+            className="absolute inset-0 overflow-hidden pointer-events-none"
+            style={{
+              zIndex: 0,
+              opacity: keyboardOpen ? 0 : 1,
+              transition: "opacity 0.35s ease",
+            }}
+          >
+            <ResilienceWave triageState={triage} />
+          </div>
+
+          {/* Z-10 — Floating glass composer hovering OVER the wave */}
+          <div
+            className="absolute left-0 right-0 px-6"
+            style={{
+              zIndex: 10,
+              bottom: "max(env(safe-area-inset-bottom), 0.75rem)",
+            }}
+          >
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                send();
+              }}
+              className="flex items-center gap-2 rounded-full pl-5 pr-2 py-2"
+              style={{
+                background: "rgba(10, 17, 40, 0.6)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                border: "1px solid rgba(255, 255, 255, 0.05)",
+              }}
+            >
+              <input
+                type="text"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onFocus={() => setInputFocused(true)}
+                onBlur={() => setInputFocused(false)}
+                placeholder="Say what's true right now…"
+                className="flex-1 bg-transparent outline-none text-[14px] text-foreground placeholder:text-muted-foreground/70 py-1.5"
+              />
+              <button
+                type="submit"
+                aria-label="Send"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-primary-foreground transition-transform active:scale-95"
+                style={{
+                  background: "var(--wave-color)",
+                  transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14" />
+                  <path d="m13 6 6 6-6 6" />
+                </svg>
+              </button>
+            </form>
+          </div>
         </section>
+
+        {/* EVOLUTIONARY DRAWER — Historical Pulse, slides down BEHIND the header (z-40) */}
+        <AnimatePresence>
+          {pulseOpen && (
+            <>
+              <motion.div
+                key="pulse-scrim"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="absolute inset-0 z-30"
+                style={{ background: "rgba(10,17,40,0.35)" }}
+                onClick={() => setPulseOpen(false)}
+              />
+              <motion.div
+                key="pulse-drawer"
+                initial={{ y: "-100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "-100%" }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="absolute top-0 left-0 right-0 z-40 rounded-b-3xl overflow-hidden"
+                style={{
+                  height: "50%",
+                  background: "rgba(255,255,255,0.05)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  borderBottom: "1px solid rgba(255,255,255,0.08)",
+                  paddingTop: "max(env(safe-area-inset-top), 0.75rem)",
+                }}
+                role="dialog"
+                aria-label="Historical pulse"
+              >
+                <div className="h-full flex flex-col px-6 pt-16 pb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] tracking-[0.32em] uppercase text-foreground/70">
+                      The Constant Thread
+                    </span>
+                    <span className="text-[10px] tracking-[0.22em] uppercase text-muted-foreground/70">
+                      7 days
+                    </span>
+                  </div>
+                  <div className="flex-1 flex items-center">
+                    <HistoricalPulse data={samplePulse} />
+                  </div>
+                  {/* Drag handle */}
+                  <button
+                    type="button"
+                    onClick={() => setPulseOpen(false)}
+                    aria-label="Close historical pulse"
+                    className="mx-auto mt-2 h-3 w-12 flex items-center justify-center"
+                  >
+                    <span
+                      className="block h-[2px] w-10 rounded-full"
+                      style={{ background: "rgba(255,255,255,0.18)" }}
+                    />
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Settings drawer */}
