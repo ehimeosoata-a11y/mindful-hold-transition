@@ -231,40 +231,28 @@ const SafeHavenChat = () => {
               transition={{ delay: i < initialMessages.length ? 0.4 + i * 0.25 : 0, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
               className={
                 m.from === "haven"
-                  ? "self-start max-w-[82%] rounded-2xl rounded-bl-md glass-panel px-4 py-3 text-[14px] leading-relaxed text-foreground/90"
-                  : "self-end max-w-[82%] rounded-2xl rounded-br-md px-4 py-3 text-[14px] leading-relaxed text-primary-foreground"
+                  ? "self-start max-w-[82%] rounded-2xl rounded-bl-md px-4 py-3 text-[14px] leading-relaxed text-foreground/90"
+                  : "self-end max-w-[82%] rounded-2xl rounded-br-md px-4 py-3 text-[14px] leading-relaxed text-foreground/85"
               }
               style={
-                m.from === "you"
+                m.from === "haven"
                   ? {
-                      background: "var(--wave-color)",
-                      transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1)",
+                      // AI: slightly lighter navy/charcoal, no border — soft and grounded
+                      background: "rgba(255,255,255,0.035)",
+                      border: "1px solid rgba(255,255,255,0.04)",
+                      backdropFilter: "blur(8px)",
+                      WebkitBackdropFilter: "blur(8px)",
                     }
-                  : undefined
+                  : {
+                      // User: border-only style, transparent fill — subtle hierarchy
+                      background: "transparent",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                    }
               }
             >
               {m.text}
             </motion.div>
           ))}
-
-          {/* The Constant Thread — 7-day historical pulse */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.1, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-            className="mt-2 rounded-2xl glass-panel px-3 py-3"
-            style={{ pointerEvents: "auto" }}
-          >
-            <div className="px-2 pb-2 flex items-center justify-between">
-              <span className="text-[10px] tracking-[0.28em] uppercase text-muted-foreground">
-                The Constant Thread
-              </span>
-              <span className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground/70">
-                7 days
-              </span>
-            </div>
-            <HistoricalPulse data={samplePulse} />
-          </motion.div>
           </motion.div>
           )}
         </main>
