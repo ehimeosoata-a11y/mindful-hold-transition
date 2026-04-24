@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { Lock, Settings2, Flame, ShieldCheck } from "lucide-react";
+import { Lock, Settings2, Flame, ShieldCheck, Activity } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import ResilienceWave, { type TriageState } from "./ResilienceWave";
 import HistoricalPulse, { type PulseDatum } from "./HistoricalPulse";
@@ -33,6 +33,8 @@ const SafeHavenChat = () => {
   const [burnConfirmOpen, setBurnConfirmOpen] = useState(false);
   const [burning, setBurning] = useState(false);
   const [burned, setBurned] = useState(false);
+  const [pulseOpen, setPulseOpen] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
   const narrativeRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -57,6 +59,11 @@ const SafeHavenChat = () => {
     const el = narrativeRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // Lock the Evolutionary Drawer while the user is typing — no visual clutter.
+  useEffect(() => {
+    if (inputFocused && pulseOpen) setPulseOpen(false);
+  }, [inputFocused, pulseOpen]);
 
   const send = () => {
     const text = draft.trim();
