@@ -217,9 +217,14 @@ const SafeHavenChat = () => {
         {/* MIDDLE — 60% : Narrative space, masked + scrollable */}
         <main
           ref={narrativeRef}
-          className="px-6 pt-4 pb-4 flex flex-col gap-3 overflow-y-auto no-scrollbar narrative-mask"
+          className="relative px-6 pt-4 pb-4 flex flex-col gap-3 overflow-y-auto no-scrollbar narrative-mask"
           style={{ flex: keyboardOpen ? "1 1 auto" : "0 0 60%" }}
         >
+          {/* Phase 0 — atmospheric "Light Leak" until the user types. */}
+          <AnimatePresence>
+            {!burned && !userHasSpoken && <NarrativeGhost />}
+          </AnimatePresence>
+
           {burned ? (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -243,36 +248,53 @@ const SafeHavenChat = () => {
             animate={{ opacity: burning ? 0 : 1 }}
             transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
           >
-          {messages.map((m, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i < initialMessages.length ? 0.4 + i * 0.25 : 0, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-              className={
-                m.from === "haven"
-                  ? "self-start max-w-[82%] rounded-2xl rounded-bl-md px-4 py-3 text-[14px] leading-relaxed text-foreground/90"
-                  : "self-end max-w-[82%] rounded-2xl rounded-br-md px-4 py-3 text-[14px] leading-relaxed text-foreground/85"
-              }
-              style={
-                m.from === "haven"
-                  ? {
-                      // AI: slightly lighter navy/charcoal, no border — soft and grounded
-                      background: "rgba(255,255,255,0.035)",
-                      border: "1px solid rgba(255,255,255,0.04)",
-                      backdropFilter: "blur(8px)",
-                      WebkitBackdropFilter: "blur(8px)",
-                    }
-                  : {
-                      // User: border-only style, transparent fill — subtle hierarchy
-                      background: "transparent",
-                      border: "1px solid rgba(255,255,255,0.12)",
-                    }
-              }
-            >
-              {m.text}
-            </motion.div>
-          ))}
+          {messages.map((m, i) => {
+            const isInitial = i < initialMessages.length;
+            // Phase 3 — first AI bubble enters with a true spring (not a tween).
+            // Subsequent initial bubbles inherit the spring; later bubbles use a
+            // soft tween so the narrative stays calm during conversation.
+            const transition = isInitial
+              ? {
+                  type: "spring" as const,
+                  stiffness: 100,
+                  damping: 15,
+                  delay: 1.0 + i * 0.45, // after wave (0.8s) + header (0.5s @ 0.4s)
+                }
+              : { duration: 0.5, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] };
+            const isFirstHaven = i === 0 && m.from === "haven";
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={transition}
+                className={
+                  m.from === "haven"
+                    ? "self-start max-w-[82%] rounded-2xl rounded-bl-md px-4 py-3 text-[14px] leading-relaxed text-foreground/90 relative z-10"
+                    : "self-end max-w-[82%] rounded-2xl rounded-br-md px-4 py-3 text-[14px] leading-relaxed text-foreground/85 relative z-10"
+                }
+                style={
+                  m.from === "haven"
+                    ? {
+                        background: "rgba(255,255,255,0.035)",
+                        border: "1px solid rgba(255,255,255,0.04)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                      }
+                    : {
+                        background: "transparent",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                      }
+                }
+              >
+                {isFirstHaven ? (
+                  <Typewriter text={m.text} startDelay={1.15} cps={26} />
+                ) : (
+                  m.text
+                )}
+              </motion.div>
+            );
+          })}
           </motion.div>
           )}
         </main>
