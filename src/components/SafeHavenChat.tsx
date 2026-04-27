@@ -4,6 +4,7 @@ import { Lock, Settings2, Flame, ShieldCheck, Activity } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import ResilienceWave, { type TriageState } from "./ResilienceWave";
 import HistoricalPulse, { type PulseDatum } from "./HistoricalPulse";
+import NarrativeGhost from "./NarrativeGhost";
 
 type Message = { from: "haven" | "you"; text: string };
 
@@ -35,7 +36,19 @@ const SafeHavenChat = () => {
   const [burned, setBurned] = useState(false);
   const [pulseOpen, setPulseOpen] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
+  const [ripples, setRipples] = useState<number[]>([]);
   const narrativeRef = useRef<HTMLElement>(null);
+
+  // The user has spoken iff at least one message in the log is from "you".
+  // Drives the NarrativeGhost exit so the ambient blob yields to dialogue.
+  const userHasSpoken = messages.some((m) => m.from === "you");
+
+  // Glow class is purely presentational and reflects the same triage signal
+  // as the wave — keeping the entire UI in lock-step as a single organism.
+  const sendGlowClass =
+    triage === "calm" ? "send-glow-calm" : triage === "alert" ? "send-glow-alert" : "send-glow-crisis";
+  const rippleColor =
+    triage === "calm" ? "rgba(16,185,129,0.55)" : triage === "alert" ? "rgba(245,158,11,0.55)" : "rgba(112,26,117,0.6)";
 
   useEffect(() => {
     document.documentElement.setAttribute("data-triage", triage);
@@ -70,6 +83,10 @@ const SafeHavenChat = () => {
     if (!text) return;
     setMessages((m) => [...m, { from: "you", text }]);
     setDraft("");
+    // Fire a one-shot ripple keyed by timestamp; cleaned up after the animation.
+    const id = Date.now();
+    setRipples((r) => [...r, id]);
+    window.setTimeout(() => setRipples((r) => r.filter((x) => x !== id)), 650);
   };
 
   return (
@@ -78,15 +95,18 @@ const SafeHavenChat = () => {
       style={{ minHeight: "100dvh" }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+      transition={{ duration: 0.8, ease: "linear" }}
     >
       {/* Mobile-first 480px shell — strict 10 / 60 / 30 distribution */}
       <div
         className="relative w-full max-w-[480px] flex flex-col"
         style={{ minHeight: "100dvh", height: "100dvh" }}
       >
-        {/* TOP — 10% : Evolutionary Header. Brand left, trust+status grouped right. */}
-        <header
+        {/* TOP — 10% : Evolutionary Header. Slides down as Phase 2 of the arrival ritual. */}
+        <motion.header
+          initial={{ y: -100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, ease: [0, 0.55, 0.45, 1], delay: 0.4 }}
           className="sticky top-0 z-50 flex items-center justify-between px-6 nexilo-shell-bg"
           style={{
             flex: "0 0 10%",
@@ -166,7 +186,7 @@ const SafeHavenChat = () => {
               <Settings2 className="w-3.5 h-3.5" strokeWidth={1.75} />
             </button>
           </div>
-        </header>
+        </motion.header>
 
         {/* Bridge Indicator — only in crisis */}
         <AnimatePresence>
@@ -197,9 +217,14 @@ const SafeHavenChat = () => {
         {/* MIDDLE — 60% : Narrative space, masked + scrollable */}
         <main
           ref={narrativeRef}
-          className="px-6 pt-4 pb-4 flex flex-col gap-3 overflow-y-auto no-scrollbar narrative-mask"
+          className="relative px-6 pt-4 pb-4 flex flex-col gap-3 overflow-y-auto no-scrollbar narrative-mask"
           style={{ flex: keyboardOpen ? "1 1 auto" : "0 0 60%" }}
         >
+          {/* Phase 0 — atmospheric "Light Leak" until the user types. */}
+          <AnimatePresence>
+            {!burned && !userHasSpoken && <NarrativeGhost />}
+          </AnimatePresence>
+
           {burned ? (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -223,36 +248,53 @@ const SafeHavenChat = () => {
             animate={{ opacity: burning ? 0 : 1 }}
             transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
           >
-          {messages.map((m, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i < initialMessages.length ? 0.4 + i * 0.25 : 0, duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-              className={
-                m.from === "haven"
-                  ? "self-start max-w-[82%] rounded-2xl rounded-bl-md px-4 py-3 text-[14px] leading-relaxed text-foreground/90"
-                  : "self-end max-w-[82%] rounded-2xl rounded-br-md px-4 py-3 text-[14px] leading-relaxed text-foreground/85"
-              }
-              style={
-                m.from === "haven"
-                  ? {
-                      // AI: slightly lighter navy/charcoal, no border — soft and grounded
-                      background: "rgba(255,255,255,0.035)",
-                      border: "1px solid rgba(255,255,255,0.04)",
-                      backdropFilter: "blur(8px)",
-                      WebkitBackdropFilter: "blur(8px)",
-                    }
-                  : {
-                      // User: border-only style, transparent fill — subtle hierarchy
-                      background: "transparent",
-                      border: "1px solid rgba(255,255,255,0.12)",
-                    }
-              }
-            >
-              {m.text}
-            </motion.div>
-          ))}
+          {messages.map((m, i) => {
+            const isInitial = i < initialMessages.length;
+            // Phase 3 — first AI bubble enters with a true spring (not a tween).
+            // Subsequent initial bubbles inherit the spring; later bubbles use a
+            // soft tween so the narrative stays calm during conversation.
+            const transition = isInitial
+              ? {
+                  type: "spring" as const,
+                  stiffness: 100,
+                  damping: 15,
+                  delay: 1.0 + i * 0.45, // after wave (0.8s) + header (0.5s @ 0.4s)
+                }
+              : { duration: 0.5, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] };
+            const isFirstHaven = i === 0 && m.from === "haven";
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={transition}
+                className={
+                  m.from === "haven"
+                    ? "self-start max-w-[82%] rounded-2xl rounded-bl-md px-4 py-3 text-[14px] leading-relaxed text-foreground/90 relative z-10"
+                    : "self-end max-w-[82%] rounded-2xl rounded-br-md px-4 py-3 text-[14px] leading-relaxed text-foreground/85 relative z-10"
+                }
+                style={
+                  m.from === "haven"
+                    ? {
+                        background: "rgba(255,255,255,0.035)",
+                        border: "1px solid rgba(255,255,255,0.04)",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                      }
+                    : {
+                        background: "transparent",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                      }
+                }
+              >
+                {isFirstHaven ? (
+                  <Typewriter text={m.text} startDelay={1.15} cps={26} />
+                ) : (
+                  m.text
+                )}
+              </motion.div>
+            );
+          })}
           </motion.div>
           )}
         </main>
@@ -268,16 +310,15 @@ const SafeHavenChat = () => {
           aria-label="Resilience visualization and composer"
         >
           {/* Z-0 — Resilience Wave, pointer-events-none so it never blocks input */}
-          <div
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: keyboardOpen ? 0 : 1 }}
+            transition={{ duration: 0.8, ease: "linear" }}
             className="absolute inset-0 overflow-hidden pointer-events-none"
-            style={{
-              zIndex: 0,
-              opacity: keyboardOpen ? 0 : 1,
-              transition: "opacity 0.35s ease",
-            }}
+            style={{ zIndex: 0 }}
           >
             <ResilienceWave triageState={triage} />
-          </div>
+          </motion.div>
 
           {/* Z-10 — Floating glass composer hovering OVER the wave */}
           <div
@@ -312,13 +353,27 @@ const SafeHavenChat = () => {
               <button
                 type="submit"
                 aria-label="Send"
-                className="w-9 h-9 rounded-full flex items-center justify-center text-primary-foreground transition-transform active:scale-95"
+                className={`relative w-9 h-9 rounded-full flex items-center justify-center text-primary-foreground transition-transform active:scale-95 ${sendGlowClass}`}
                 style={{
                   background: "var(--wave-color)",
-                  transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease",
+                  transition:
+                    "background 3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease, filter 0.4s ease",
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {/* Click ripple — color tracks the wave/triage state */}
+                <span aria-hidden className="pointer-events-none absolute inset-0 overflow-visible">
+                  {ripples.map((id) => (
+                    <span
+                      key={id}
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        background: rippleColor,
+                        animation: "send-ripple 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+                      }}
+                    />
+                  ))}
+                </span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="relative">
                   <path d="M5 12h14" />
                   <path d="m13 6 6 6-6 6" />
                 </svg>
@@ -516,3 +571,57 @@ const SafeHavenChat = () => {
 };
 
 export default SafeHavenChat;
+
+/**
+ * Typewriter — paced character reveal for the very first AI line.
+ * Uses a steady characters-per-second cadence so it reads as a deep exhale,
+ * never a glitchy stutter. The blinking caret retires once the line settles.
+ */
+const Typewriter = ({
+  text,
+  startDelay = 0,
+  cps = 24,
+}: {
+  text: string;
+  startDelay?: number;
+  cps?: number;
+}) => {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    let start = 0;
+    const step = (t: number) => {
+      if (!start) start = t;
+      const elapsed = (t - start) / 1000 - startDelay;
+      if (elapsed < 0) {
+        raf = requestAnimationFrame(step);
+        return;
+      }
+      const next = Math.min(text.length, Math.floor(elapsed * cps));
+      setCount(next);
+      if (next < text.length) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [text, startDelay, cps]);
+
+  const done = count >= text.length;
+  return (
+    <span>
+      {text.slice(0, count)}
+      {!done && (
+        <span
+          aria-hidden
+          className="inline-block ml-0.5 align-baseline"
+          style={{
+            width: "1px",
+            height: "0.95em",
+            background: "currentColor",
+            opacity: 0.6,
+            animation: "send-glow-calm 1.2s ease-in-out infinite",
+          }}
+        />
+      )}
+    </span>
+  );
+};
