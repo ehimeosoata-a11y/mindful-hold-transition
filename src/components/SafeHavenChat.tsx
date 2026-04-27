@@ -4,6 +4,7 @@ import { Lock, Settings2, Flame, ShieldCheck, Activity } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import ResilienceWave, { type TriageState } from "./ResilienceWave";
 import HistoricalPulse, { type PulseDatum } from "./HistoricalPulse";
+import NarrativeGhost from "./NarrativeGhost";
 
 type Message = { from: "haven" | "you"; text: string };
 
@@ -35,7 +36,19 @@ const SafeHavenChat = () => {
   const [burned, setBurned] = useState(false);
   const [pulseOpen, setPulseOpen] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
+  const [ripples, setRipples] = useState<number[]>([]);
   const narrativeRef = useRef<HTMLElement>(null);
+
+  // The user has spoken iff at least one message in the log is from "you".
+  // Drives the NarrativeGhost exit so the ambient blob yields to dialogue.
+  const userHasSpoken = messages.some((m) => m.from === "you");
+
+  // Glow class is purely presentational and reflects the same triage signal
+  // as the wave — keeping the entire UI in lock-step as a single organism.
+  const sendGlowClass =
+    triage === "calm" ? "send-glow-calm" : triage === "alert" ? "send-glow-alert" : "send-glow-crisis";
+  const rippleColor =
+    triage === "calm" ? "rgba(16,185,129,0.55)" : triage === "alert" ? "rgba(245,158,11,0.55)" : "rgba(112,26,117,0.6)";
 
   useEffect(() => {
     document.documentElement.setAttribute("data-triage", triage);
@@ -70,6 +83,10 @@ const SafeHavenChat = () => {
     if (!text) return;
     setMessages((m) => [...m, { from: "you", text }]);
     setDraft("");
+    // Fire a one-shot ripple keyed by timestamp; cleaned up after the animation.
+    const id = Date.now();
+    setRipples((r) => [...r, id]);
+    window.setTimeout(() => setRipples((r) => r.filter((x) => x !== id)), 650);
   };
 
   return (
