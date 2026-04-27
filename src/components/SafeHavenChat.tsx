@@ -571,3 +571,57 @@ const SafeHavenChat = () => {
 };
 
 export default SafeHavenChat;
+
+/**
+ * Typewriter — paced character reveal for the very first AI line.
+ * Uses a steady characters-per-second cadence so it reads as a deep exhale,
+ * never a glitchy stutter. The blinking caret retires once the line settles.
+ */
+const Typewriter = ({
+  text,
+  startDelay = 0,
+  cps = 24,
+}: {
+  text: string;
+  startDelay?: number;
+  cps?: number;
+}) => {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    let start = 0;
+    const step = (t: number) => {
+      if (!start) start = t;
+      const elapsed = (t - start) / 1000 - startDelay;
+      if (elapsed < 0) {
+        raf = requestAnimationFrame(step);
+        return;
+      }
+      const next = Math.min(text.length, Math.floor(elapsed * cps));
+      setCount(next);
+      if (next < text.length) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [text, startDelay, cps]);
+
+  const done = count >= text.length;
+  return (
+    <span>
+      {text.slice(0, count)}
+      {!done && (
+        <span
+          aria-hidden
+          className="inline-block ml-0.5 align-baseline"
+          style={{
+            width: "1px",
+            height: "0.95em",
+            background: "currentColor",
+            opacity: 0.6,
+            animation: "send-glow-calm 1.2s ease-in-out infinite",
+          }}
+        />
+      )}
+    </span>
+  );
+};
