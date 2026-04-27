@@ -179,11 +179,11 @@ const SafeHavenChat = () => {
             <button
               type="button"
               aria-label={`NDPR Encrypted · Lagos. Triage: ${triage}. Tap to cycle.`}
-              onClick={() =>
-                setTriage((s) =>
-                  s === "calm" ? "alert" : s === "alert" ? "crisis" : "calm",
-                )
-              }
+              onClick={() => {
+                const next: TriageState =
+                  triage === "calm" ? "alert" : triage === "alert" ? "crisis" : "calm";
+                setTriage(next);
+              }}
               className="flex items-center gap-2 h-8 pl-2.5 pr-3 rounded-full transition-colors"
               style={{
                 background: "rgba(255,255,255,0.03)",
