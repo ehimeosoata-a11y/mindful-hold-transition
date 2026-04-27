@@ -95,15 +95,18 @@ const SafeHavenChat = () => {
       style={{ minHeight: "100dvh" }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+      transition={{ duration: 0.8, ease: "linear" }}
     >
       {/* Mobile-first 480px shell — strict 10 / 60 / 30 distribution */}
       <div
         className="relative w-full max-w-[480px] flex flex-col"
         style={{ minHeight: "100dvh", height: "100dvh" }}
       >
-        {/* TOP — 10% : Evolutionary Header. Brand left, trust+status grouped right. */}
-        <header
+        {/* TOP — 10% : Evolutionary Header. Slides down as Phase 2 of the arrival ritual. */}
+        <motion.header
+          initial={{ y: -100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, ease: [0, 0.55, 0.45, 1], delay: 0.4 }}
           className="sticky top-0 z-50 flex items-center justify-between px-6 nexilo-shell-bg"
           style={{
             flex: "0 0 10%",
@@ -183,7 +186,7 @@ const SafeHavenChat = () => {
               <Settings2 className="w-3.5 h-3.5" strokeWidth={1.75} />
             </button>
           </div>
-        </header>
+        </motion.header>
 
         {/* Bridge Indicator — only in crisis */}
         <AnimatePresence>
