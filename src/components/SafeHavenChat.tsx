@@ -310,16 +310,15 @@ const SafeHavenChat = () => {
           aria-label="Resilience visualization and composer"
         >
           {/* Z-0 — Resilience Wave, pointer-events-none so it never blocks input */}
-          <div
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: keyboardOpen ? 0 : 1 }}
+            transition={{ duration: 0.8, ease: "linear" }}
             className="absolute inset-0 overflow-hidden pointer-events-none"
-            style={{
-              zIndex: 0,
-              opacity: keyboardOpen ? 0 : 1,
-              transition: "opacity 0.35s ease",
-            }}
+            style={{ zIndex: 0 }}
           >
             <ResilienceWave triageState={triage} />
-          </div>
+          </motion.div>
 
           {/* Z-10 — Floating glass composer hovering OVER the wave */}
           <div
@@ -354,13 +353,27 @@ const SafeHavenChat = () => {
               <button
                 type="submit"
                 aria-label="Send"
-                className="w-9 h-9 rounded-full flex items-center justify-center text-primary-foreground transition-transform active:scale-95"
+                className={`relative w-9 h-9 rounded-full flex items-center justify-center text-primary-foreground transition-transform active:scale-95 ${sendGlowClass}`}
                 style={{
                   background: "var(--wave-color)",
-                  transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease",
+                  transition:
+                    "background 3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease, filter 0.4s ease",
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {/* Click ripple — color tracks the wave/triage state */}
+                <span aria-hidden className="pointer-events-none absolute inset-0 overflow-visible">
+                  {ripples.map((id) => (
+                    <span
+                      key={id}
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        background: rippleColor,
+                        animation: "send-ripple 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+                      }}
+                    />
+                  ))}
+                </span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="relative">
                   <path d="M5 12h14" />
                   <path d="m13 6 6 6-6 6" />
                 </svg>
