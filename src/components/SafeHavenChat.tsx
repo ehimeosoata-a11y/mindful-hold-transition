@@ -5,6 +5,7 @@ import { AnimatePresence } from "framer-motion";
 import ResilienceWave, { type TriageState } from "./ResilienceWave";
 import HistoricalPulse, { type PulseDatum } from "./HistoricalPulse";
 import NarrativeGhost from "./NarrativeGhost";
+import { useMockSimulation } from "@/hooks/useMockSimulation";
 
 type Message = { from: "haven" | "you"; text: string };
 
@@ -27,8 +28,9 @@ const samplePulse: PulseDatum[] = [
 
 const SafeHavenChat = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [draft, setDraft] = useState("");
-  const [triage, setTriage] = useState<TriageState>("calm");
+  // Mock simulation engine — keyword + latency triage, with controlled draft.
+  const sim = useMockSimulation({ initialState: "calm" });
+  const { draft, setDraft, onInputChange, triage, setTriage, resetSignals } = sim;
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [burnConfirmOpen, setBurnConfirmOpen] = useState(false);
@@ -37,6 +39,15 @@ const SafeHavenChat = () => {
   const [pulseOpen, setPulseOpen] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [ripples, setRipples] = useState<number[]>([]);
+  // Selected day from the Pulse Graph — drives the header "Last Tuesday" sync.
+  const [selectedPulseIdx, setSelectedPulseIdx] = useState<number | null>(null);
+  // Auto-clear the day selection after a few seconds so the header settles back
+  // to live triage state.
+  useEffect(() => {
+    if (selectedPulseIdx === null) return;
+    const t = window.setTimeout(() => setSelectedPulseIdx(null), 4500);
+    return () => window.clearTimeout(t);
+  }, [selectedPulseIdx]);
   const narrativeRef = useRef<HTMLElement>(null);
 
   // The user has spoken iff at least one message in the log is from "you".
@@ -83,11 +94,37 @@ const SafeHavenChat = () => {
     if (!text) return;
     setMessages((m) => [...m, { from: "you", text }]);
     setDraft("");
+    resetSignals();
+    // Luxury haptic — 10ms "micro-click" on send.
+    try { navigator.vibrate?.(10); } catch { /* no-op */ }
     // Fire a one-shot ripple keyed by timestamp; cleaned up after the animation.
     const id = Date.now();
     setRipples((r) => [...r, id]);
     window.setTimeout(() => setRipples((r) => r.filter((x) => x !== id)), 650);
   };
+
+  // Luxury haptic — 40ms "deep pulse" when the Evolutionary Drawer snaps open.
+  useEffect(() => {
+    if (pulseOpen) {
+      try { navigator.vibrate?.(40); } catch { /* no-op */ }
+    }
+  }, [pulseOpen]);
+
+  // ── Header sync derived from Pulse selection ─────────────────────────────
+  // PulseDatum.state values are "Steady" | "Elevated" | "Crisis"; map to color.
+  const PULSE_STATE_COLOR: Record<string, string> = {
+    Steady: "#10B981",
+    Elevated: "#F59E0B",
+    Crisis: "#EF4444",
+  };
+  const selectedDay = selectedPulseIdx != null ? samplePulse[selectedPulseIdx] : null;
+  const headerLabel = selectedDay
+    ? `${selectedDay.date ?? selectedDay.day} · ${selectedDay.state}`
+    : `NDPR · Lagos`;
+  const headerStateText = selectedDay ? selectedDay.state.toUpperCase() : triage;
+  const headerStateColor = selectedDay
+    ? PULSE_STATE_COLOR[selectedDay.state]
+    : "var(--wave-color)";
 
   return (
     <motion.div
