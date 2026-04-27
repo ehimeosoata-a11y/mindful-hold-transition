@@ -194,19 +194,20 @@ const SafeHavenChat = () => {
             >
               <Lock className="w-3 h-3 text-foreground/60" strokeWidth={1.75} />
               <span className="text-[9px] font-light tracking-[0.22em] uppercase text-foreground/65">
-                NDPR · Lagos
+                {headerLabel}
               </span>
               <span
                 aria-hidden
                 className="ml-1 w-1.5 h-1.5 rounded-full"
                 style={{
-                  background: "var(--wave-color)",
-                  boxShadow: "0 0 8px var(--wave-color)",
-                  transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  background: headerStateColor,
+                  boxShadow: `0 0 8px ${headerStateColor}`,
+                  transition:
+                    "background 600ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 600ms cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               />
               <span className="text-[9px] tracking-[0.24em] uppercase text-foreground/70">
-                {triage}
+                {headerStateText}
               </span>
             </button>
 
@@ -317,10 +318,15 @@ const SafeHavenChat = () => {
                         border: "1px solid rgba(255,255,255,0.04)",
                         backdropFilter: "blur(8px)",
                         WebkitBackdropFilter: "blur(8px)",
+                        // Luxury "Soft-Touch" — multi-layered cloud-like depth.
+                        boxShadow:
+                          "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 1px rgba(255, 255, 255, 0.05)",
                       }
                     : {
                         background: "transparent",
                         border: "1px solid rgba(255,255,255,0.12)",
+                        boxShadow:
+                          "0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.04)",
                       }
                 }
               >
@@ -381,7 +387,7 @@ const SafeHavenChat = () => {
               <input
                 type="text"
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={onInputChange}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
                 placeholder="Say what's true right now…"
@@ -461,7 +467,14 @@ const SafeHavenChat = () => {
                     </span>
                   </div>
                   <div className="flex-1 flex items-center">
-                    <HistoricalPulse data={samplePulse} />
+                    <HistoricalPulse
+                      data={samplePulse}
+                      selectedIndex={selectedPulseIdx}
+                      onSelect={(_d, i) => {
+                        setSelectedPulseIdx(i);
+                        try { navigator.vibrate?.(10); } catch { /* no-op */ }
+                      }}
+                    />
                   </div>
                   {/* Drag handle */}
                   <button
