@@ -5,6 +5,7 @@ import { AnimatePresence } from "framer-motion";
 import ResilienceWave, { type TriageState } from "./ResilienceWave";
 import HistoricalPulse, { type PulseDatum } from "./HistoricalPulse";
 import NarrativeGhost from "./NarrativeGhost";
+import { useMockSimulation } from "@/hooks/useMockSimulation";
 
 type Message = { from: "haven" | "you"; text: string };
 
@@ -27,8 +28,9 @@ const samplePulse: PulseDatum[] = [
 
 const SafeHavenChat = () => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [draft, setDraft] = useState("");
-  const [triage, setTriage] = useState<TriageState>("calm");
+  // Mock simulation engine — keyword + latency triage, with controlled draft.
+  const sim = useMockSimulation({ initialState: "calm" });
+  const { draft, setDraft, onInputChange, triage, setTriage, resetSignals } = sim;
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [burnConfirmOpen, setBurnConfirmOpen] = useState(false);
@@ -37,6 +39,15 @@ const SafeHavenChat = () => {
   const [pulseOpen, setPulseOpen] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [ripples, setRipples] = useState<number[]>([]);
+  // Selected day from the Pulse Graph — drives the header "Last Tuesday" sync.
+  const [selectedPulseIdx, setSelectedPulseIdx] = useState<number | null>(null);
+  // Auto-clear the day selection after a few seconds so the header settles back
+  // to live triage state.
+  useEffect(() => {
+    if (selectedPulseIdx === null) return;
+    const t = window.setTimeout(() => setSelectedPulseIdx(null), 4500);
+    return () => window.clearTimeout(t);
+  }, [selectedPulseIdx]);
   const narrativeRef = useRef<HTMLElement>(null);
 
   // The user has spoken iff at least one message in the log is from "you".
@@ -83,11 +94,37 @@ const SafeHavenChat = () => {
     if (!text) return;
     setMessages((m) => [...m, { from: "you", text }]);
     setDraft("");
+    resetSignals();
+    // Luxury haptic — 10ms "micro-click" on send.
+    try { navigator.vibrate?.(10); } catch { /* no-op */ }
     // Fire a one-shot ripple keyed by timestamp; cleaned up after the animation.
     const id = Date.now();
     setRipples((r) => [...r, id]);
     window.setTimeout(() => setRipples((r) => r.filter((x) => x !== id)), 650);
   };
+
+  // Luxury haptic — 40ms "deep pulse" when the Evolutionary Drawer snaps open.
+  useEffect(() => {
+    if (pulseOpen) {
+      try { navigator.vibrate?.(40); } catch { /* no-op */ }
+    }
+  }, [pulseOpen]);
+
+  // ── Header sync derived from Pulse selection ─────────────────────────────
+  // PulseDatum.state values are "Steady" | "Elevated" | "Crisis"; map to color.
+  const PULSE_STATE_COLOR: Record<string, string> = {
+    Steady: "#10B981",
+    Elevated: "#F59E0B",
+    Crisis: "#EF4444",
+  };
+  const selectedDay = selectedPulseIdx != null ? samplePulse[selectedPulseIdx] : null;
+  const headerLabel = selectedDay
+    ? `${selectedDay.date ?? selectedDay.day} · ${selectedDay.state}`
+    : `NDPR · Lagos`;
+  const headerStateText = selectedDay ? selectedDay.state.toUpperCase() : triage;
+  const headerStateColor = selectedDay
+    ? PULSE_STATE_COLOR[selectedDay.state]
+    : "var(--wave-color)";
 
   return (
     <motion.div
@@ -142,11 +179,11 @@ const SafeHavenChat = () => {
             <button
               type="button"
               aria-label={`NDPR Encrypted · Lagos. Triage: ${triage}. Tap to cycle.`}
-              onClick={() =>
-                setTriage((s) =>
-                  s === "calm" ? "alert" : s === "alert" ? "crisis" : "calm",
-                )
-              }
+              onClick={() => {
+                const next: TriageState =
+                  triage === "calm" ? "alert" : triage === "alert" ? "crisis" : "calm";
+                setTriage(next);
+              }}
               className="flex items-center gap-2 h-8 pl-2.5 pr-3 rounded-full transition-colors"
               style={{
                 background: "rgba(255,255,255,0.03)",
@@ -157,19 +194,20 @@ const SafeHavenChat = () => {
             >
               <Lock className="w-3 h-3 text-foreground/60" strokeWidth={1.75} />
               <span className="text-[9px] font-light tracking-[0.22em] uppercase text-foreground/65">
-                NDPR · Lagos
+                {headerLabel}
               </span>
               <span
                 aria-hidden
                 className="ml-1 w-1.5 h-1.5 rounded-full"
                 style={{
-                  background: "var(--wave-color)",
-                  boxShadow: "0 0 8px var(--wave-color)",
-                  transition: "background 3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  background: headerStateColor,
+                  boxShadow: `0 0 8px ${headerStateColor}`,
+                  transition:
+                    "background 600ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 600ms cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
               />
               <span className="text-[9px] tracking-[0.24em] uppercase text-foreground/70">
-                {triage}
+                {headerStateText}
               </span>
             </button>
 
@@ -280,10 +318,15 @@ const SafeHavenChat = () => {
                         border: "1px solid rgba(255,255,255,0.04)",
                         backdropFilter: "blur(8px)",
                         WebkitBackdropFilter: "blur(8px)",
+                        // Luxury "Soft-Touch" — multi-layered cloud-like depth.
+                        boxShadow:
+                          "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 1px rgba(255, 255, 255, 0.05)",
                       }
                     : {
                         background: "transparent",
                         border: "1px solid rgba(255,255,255,0.12)",
+                        boxShadow:
+                          "0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.04)",
                       }
                 }
               >
@@ -344,7 +387,7 @@ const SafeHavenChat = () => {
               <input
                 type="text"
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={onInputChange}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
                 placeholder="Say what's true right now…"
@@ -424,7 +467,14 @@ const SafeHavenChat = () => {
                     </span>
                   </div>
                   <div className="flex-1 flex items-center">
-                    <HistoricalPulse data={samplePulse} />
+                    <HistoricalPulse
+                      data={samplePulse}
+                      selectedIndex={selectedPulseIdx}
+                      onSelect={(_d, i) => {
+                        setSelectedPulseIdx(i);
+                        try { navigator.vibrate?.(10); } catch { /* no-op */ }
+                      }}
+                    />
                   </div>
                   {/* Drag handle */}
                   <button

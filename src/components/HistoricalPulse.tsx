@@ -19,6 +19,11 @@ export interface PulseDatum {
 
 interface HistoricalPulseProps {
   data: PulseDatum[];
+  /** Fired when a node (or chart point) is tapped. Used to broadcast
+   *  the selected day's state to the header for "Last Tuesday: Elevated". */
+  onSelect?: (datum: PulseDatum, index: number) => void;
+  /** Currently selected index — drives the persistent ripple/scale on a node. */
+  selectedIndex?: number | null;
 }
 
 const STATE_COLORS: Record<TriageState, string> = {
@@ -76,8 +81,10 @@ const GlassTooltip = ({ active, payload }: TooltipPayload) => {
   );
 };
 
-const HistoricalPulse = memo(({ data }: HistoricalPulseProps) => {
+const HistoricalPulse = memo(({ data, onSelect, selectedIndex = null }: HistoricalPulseProps) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  // Local "tap pulse" — keyed by index+timestamp for one-shot ripple animation.
+  const [tapKey, setTapKey] = useState(0);
 
   const overallState = useMemo<TriageState>(() => {
     if (!data.length) return "Steady";
@@ -96,6 +103,13 @@ const HistoricalPulse = memo(({ data }: HistoricalPulseProps) => {
         <AreaChart
           data={data}
           margin={{ top: 16, right: 12, left: 12, bottom: 4 }}
+          onClick={(s) => {
+            const idx = s?.activeTooltipIndex;
+            if (typeof idx === "number" && data[idx]) {
+              setTapKey((k) => k + 1);
+              onSelect?.(data[idx], idx);
+            }
+          }}
           onMouseMove={(s) => {
             if (typeof s?.activeTooltipIndex === "number") {
               setHoverIndex(s.activeTooltipIndex);
@@ -156,20 +170,39 @@ const HistoricalPulse = memo(({ data }: HistoricalPulseProps) => {
               if (cx == null || cy == null || payload == null) {
                 return <g />;
               }
-              const isActive = hoverIndex === index;
+              const isHover = hoverIndex === index;
+              const isSelected = selectedIndex === index;
+              const isActive = isHover || isSelected;
               const dotColor = STATE_COLORS[payload.state];
               return (
                 <g key={`dot-${index}`}>
+                  {/* Liquid Light ripple on tap — ephemeral, ~600ms */}
+                  {isSelected && (
+                    <circle
+                      key={`ripple-${tapKey}`}
+                      cx={cx}
+                      cy={cy}
+                      r={4}
+                      fill="none"
+                      stroke={dotColor}
+                      strokeWidth={1.5}
+                      style={{
+                        transformOrigin: `${cx}px ${cy}px`,
+                        animation: "pulse-node-ripple 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+                      }}
+                    />
+                  )}
                   <circle
                     cx={cx}
                     cy={cy}
-                    r={isActive ? 5 : 3}
+                    r={isSelected ? 6 : isActive ? 5 : 3}
                     fill="#0A1128"
                     stroke={dotColor}
-                    strokeWidth={2}
+                    strokeWidth={isSelected ? 2.5 : 2}
                     style={{
-                      filter: `drop-shadow(0 0 ${isActive ? 8 : 4}px ${dotColor})`,
+                      filter: `drop-shadow(0 0 ${isSelected ? 12 : isActive ? 8 : 4}px ${dotColor})`,
                       transition: "r 200ms ease, filter 200ms ease",
+                      cursor: "pointer",
                     }}
                   />
                 </g>
