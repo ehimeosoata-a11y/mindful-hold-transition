@@ -212,6 +212,34 @@ All colors MUST be HSL.
     }
   }
 
+  /* State-aware send-button glows. Each triage state picks its own keyframes
+     to convey the system's emotional tempo without re-rendering React. */
+  @keyframes send-glow-calm {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.45)); }
+    50%      { filter: drop-shadow(0 0 14px rgba(16, 185, 129, 0.75)); }
+  }
+  @keyframes send-glow-alert {
+    0%, 100% { filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.55)); }
+    50%      { filter: drop-shadow(0 0 11px rgba(245, 158, 11, 0.9)); }
+  }
+  @keyframes send-glow-crisis {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(112, 26, 117, 0.55)); }
+    50%      { filter: drop-shadow(0 0 18px rgba(112, 26, 117, 0.85)); }
+  }
+
+  .send-glow-calm   { animation: send-glow-calm 4s ease-in-out infinite; }
+  .send-glow-alert  { animation: send-glow-alert 2s ease-in-out infinite; }
+  .send-glow-crisis { animation: send-glow-crisis 5s ease-in-out infinite; }
+
+  .send-glow-calm:hover, .send-glow-calm:focus-visible     { filter: drop-shadow(0 0 18px rgba(16, 185, 129, 0.95)); }
+  .send-glow-alert:hover, .send-glow-alert:focus-visible   { filter: drop-shadow(0 0 16px rgba(245, 158, 11, 1)); }
+  .send-glow-crisis:hover, .send-glow-crisis:focus-visible { filter: drop-shadow(0 0 24px rgba(112, 26, 117, 1)); }
+
+  @keyframes send-ripple {
+    0%   { transform: scale(0.6); opacity: 0.55; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+
   .breathing-pulse {
     background: radial-gradient(
       circle at center,
