@@ -6,6 +6,7 @@ import ResilienceWave, { type TriageState } from "./ResilienceWave";
 import HistoricalPulse, { type PulseDatum } from "./HistoricalPulse";
 import NarrativeGhost from "./NarrativeGhost";
 import { useMockSimulation } from "@/hooks/useMockSimulation";
+import { useResilienceScore } from "@/hooks/useResilienceScore";
 
 type Message = { from: "haven" | "you"; text: string };
 
@@ -31,6 +32,12 @@ const SafeHavenChat = () => {
   // Mock simulation engine — keyword + latency triage, with controlled draft.
   const sim = useMockSimulation({ initialState: "calm" });
   const { draft, setDraft, onInputChange, triage, setTriage, resetSignals } = sim;
+  // Backend resilience scoring — endpoint is configurable via
+  // VITE_RESILIENCE_ENDPOINT, otherwise falls back to /api/resilience-score.
+  const { submit: submitForScore, loading: scoring, score: lastScore } =
+    useResilienceScore({
+      onScore: ({ state }) => setTriage(state),
+    });
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [burnConfirmOpen, setBurnConfirmOpen] = useState(false);
@@ -101,6 +108,9 @@ const SafeHavenChat = () => {
     const id = Date.now();
     setRipples((r) => [...r, id]);
     window.setTimeout(() => setRipples((r) => r.filter((x) => x !== id)), 650);
+    // Fire-and-forget POST to the resilience backend; the hook updates triage
+    // (and therefore the wave color) when the score returns.
+    void submitForScore(text);
   };
 
   // Luxury haptic — 40ms "deep pulse" when the Evolutionary Drawer snaps open.
