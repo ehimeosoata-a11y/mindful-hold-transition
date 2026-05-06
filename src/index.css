@@ -283,3 +283,10 @@ All colors MUST be HSL.
   0%, 100% { transform: scaleY(0.92); }
   50%      { transform: scaleY(1.08); }
 }
+
+/* Vaporize kill-switch — pixel deconstruction shards */
+@keyframes nx-shard {
+  0%   { transform: translateX(0)    translateY(0)   scale(1);   opacity: 0.9; }
+  60%  { transform: translateX(28px) translateY(-6px) scale(1.4); opacity: 0.5; }
+  100% { transform: translateX(64px) translateY(-18px) scale(0.2); opacity: 0; }
+}

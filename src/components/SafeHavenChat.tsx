@@ -5,10 +5,17 @@ import { AnimatePresence } from "framer-motion";
 import ResilienceWave, { type TriageState } from "./ResilienceWave";
 import HistoricalPulse, { type PulseDatum } from "./HistoricalPulse";
 import NarrativeGhost from "./NarrativeGhost";
+import SovereigntyHub from "./SovereigntyHub";
+import InterventionModal from "./InterventionModal";
 import { useMockSimulation } from "@/hooks/useMockSimulation";
 import { useResilienceScore } from "@/hooks/useResilienceScore";
 
 type Message = { from: "haven" | "you"; text: string };
+
+interface SafeHavenChatProps {
+  /** Called after a Vaporize purge — host should remount onboarding. */
+  onPurged?: () => void;
+}
 
 const initialMessages: Message[] = [
   { from: "haven", text: "You arrived. Take a moment — there's no rush here." },
@@ -27,7 +34,7 @@ const samplePulse: PulseDatum[] = [
   { day: "SUN", score: 0.88, state: "Steady",   date: "Sun · Apr 23" },
 ];
 
-const SafeHavenChat = () => {
+const SafeHavenChat = ({ onPurged }: SafeHavenChatProps = {}) => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   // Mock simulation engine — keyword + latency triage, with controlled draft.
   const sim = useMockSimulation({ initialState: "calm" });
@@ -46,6 +53,22 @@ const SafeHavenChat = () => {
   const [pulseOpen, setPulseOpen] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [ripples, setRipples] = useState<number[]>([]);
+  // Intervention Modal — opens on the rising edge of the "crisis" triage state.
+  const [interventionOpen, setInterventionOpen] = useState(false);
+  const [interventionDismissed, setInterventionDismissed] = useState(false);
+  const prevTriageRef = useRef<TriageState>(triage);
+  useEffect(() => {
+    const prev = prevTriageRef.current;
+    if (prev !== "crisis" && triage === "crisis" && !interventionDismissed) {
+      setInterventionOpen(true);
+    }
+    if (triage !== "crisis") {
+      // Reset the dismissal lock once the user moves out of crisis,
+      // so the next descent into crisis can re-offer the human bridge.
+      setInterventionDismissed(false);
+    }
+    prevTriageRef.current = triage;
+  }, [triage, interventionDismissed]);
   // Selected day from the Pulse Graph — drives the header "Last Tuesday" sync.
   const [selectedPulseIdx, setSelectedPulseIdx] = useState<number | null>(null);
   // Auto-clear the day selection after a few seconds so the header settles back
@@ -505,60 +528,27 @@ const SafeHavenChat = () => {
         </AnimatePresence>
       </div>
 
-      {/* Settings drawer */}
-      <AnimatePresence>
-        {settingsOpen && (
-          <motion.div
-            className="fixed inset-0 z-[100] flex items-end justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <div
-              className="absolute inset-0"
-              style={{ background: "rgba(10,17,40,0.55)", backdropFilter: "blur(4px)" }}
-              onClick={() => setSettingsOpen(false)}
-            />
-            <motion.div
-              initial={{ y: 40, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 40, opacity: 0 }}
-              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-              className="relative w-full max-w-[480px] mx-auto rounded-t-3xl glass-panel p-6"
-              style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
-            >
-              <div className="mx-auto mb-4 w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.12)" }} />
-              <h2 className="text-[11px] tracking-[0.32em] uppercase text-foreground/80 mb-4">Settings</h2>
+      {/* Sovereignty Hub — Tactile Sovereignty settings + Vaporize kill switch */}
+      <SovereigntyHub
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onPurged={() => {
+          setSettingsOpen(false);
+          setMessages([]);
+          setDraft("");
+          setBurned(false);
+          onPurged?.();
+        }}
+      />
 
-              <div className="flex items-center justify-between py-3">
-                <div className="flex items-start gap-3">
-                  <Flame className="w-4 h-4 mt-0.5 text-foreground/70" strokeWidth={1.75} />
-                  <div>
-                    <div className="text-[13px] text-foreground/90">Burn Narrative History</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5 max-w-[260px]">
-                      Permanently clear this session's narrative. Encryption keys rotated.
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setBurnConfirmOpen(true)}
-                  aria-label="Burn narrative history"
-                  className="px-3 h-8 rounded-full text-[10px] tracking-[0.22em] uppercase transition-colors"
-                  style={{
-                    background: "rgba(220, 38, 38, 0.12)",
-                    border: "1px solid rgba(220, 38, 38, 0.35)",
-                    color: "#FCA5A5",
-                  }}
-                >
-                  Burn
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Intervention Modal — Human Fail-Safe for the Muted Plum state */}
+      <InterventionModal
+        open={interventionOpen}
+        onClose={() => {
+          setInterventionOpen(false);
+          setInterventionDismissed(true);
+        }}
+      />
 
       {/* Burn confirmation */}
       <AnimatePresence>
