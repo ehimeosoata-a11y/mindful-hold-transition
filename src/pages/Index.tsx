@@ -11,7 +11,9 @@ const Index = () => {
     <div className="min-h-screen safe-haven-shell">
       {stage === "splash" && <HapticSplash onComplete={() => setStage("onboarding")} />}
       {stage === "onboarding" && <Onboarding onComplete={() => setStage("chat")} />}
-      {stage === "chat" && <SafeHavenChat />}
+      {stage === "chat" && (
+        <SafeHavenChat onPurged={() => setStage("onboarding")} />
+      )}
     </div>
   );
 };
