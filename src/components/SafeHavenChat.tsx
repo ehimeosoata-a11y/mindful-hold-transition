@@ -5,10 +5,17 @@ import { AnimatePresence } from "framer-motion";
 import ResilienceWave, { type TriageState } from "./ResilienceWave";
 import HistoricalPulse, { type PulseDatum } from "./HistoricalPulse";
 import NarrativeGhost from "./NarrativeGhost";
+import SovereigntyHub from "./SovereigntyHub";
+import InterventionModal from "./InterventionModal";
 import { useMockSimulation } from "@/hooks/useMockSimulation";
 import { useResilienceScore } from "@/hooks/useResilienceScore";
 
 type Message = { from: "haven" | "you"; text: string };
+
+interface SafeHavenChatProps {
+  /** Called after a Vaporize purge — host should remount onboarding. */
+  onPurged?: () => void;
+}
 
 const initialMessages: Message[] = [
   { from: "haven", text: "You arrived. Take a moment — there's no rush here." },
@@ -27,7 +34,7 @@ const samplePulse: PulseDatum[] = [
   { day: "SUN", score: 0.88, state: "Steady",   date: "Sun · Apr 23" },
 ];
 
-const SafeHavenChat = () => {
+const SafeHavenChat = ({ onPurged }: SafeHavenChatProps = {}) => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   // Mock simulation engine — keyword + latency triage, with controlled draft.
   const sim = useMockSimulation({ initialState: "calm" });
@@ -46,6 +53,22 @@ const SafeHavenChat = () => {
   const [pulseOpen, setPulseOpen] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [ripples, setRipples] = useState<number[]>([]);
+  // Intervention Modal — opens on the rising edge of the "crisis" triage state.
+  const [interventionOpen, setInterventionOpen] = useState(false);
+  const [interventionDismissed, setInterventionDismissed] = useState(false);
+  const prevTriageRef = useRef<TriageState>(triage);
+  useEffect(() => {
+    const prev = prevTriageRef.current;
+    if (prev !== "crisis" && triage === "crisis" && !interventionDismissed) {
+      setInterventionOpen(true);
+    }
+    if (triage !== "crisis") {
+      // Reset the dismissal lock once the user moves out of crisis,
+      // so the next descent into crisis can re-offer the human bridge.
+      setInterventionDismissed(false);
+    }
+    prevTriageRef.current = triage;
+  }, [triage, interventionDismissed]);
   // Selected day from the Pulse Graph — drives the header "Last Tuesday" sync.
   const [selectedPulseIdx, setSelectedPulseIdx] = useState<number | null>(null);
   // Auto-clear the day selection after a few seconds so the header settles back
