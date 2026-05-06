@@ -528,60 +528,27 @@ const SafeHavenChat = ({ onPurged }: SafeHavenChatProps = {}) => {
         </AnimatePresence>
       </div>
 
-      {/* Settings drawer */}
-      <AnimatePresence>
-        {settingsOpen && (
-          <motion.div
-            className="fixed inset-0 z-[100] flex items-end justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <div
-              className="absolute inset-0"
-              style={{ background: "rgba(10,17,40,0.55)", backdropFilter: "blur(4px)" }}
-              onClick={() => setSettingsOpen(false)}
-            />
-            <motion.div
-              initial={{ y: 40, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 40, opacity: 0 }}
-              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-              className="relative w-full max-w-[480px] mx-auto rounded-t-3xl glass-panel p-6"
-              style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
-            >
-              <div className="mx-auto mb-4 w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.12)" }} />
-              <h2 className="text-[11px] tracking-[0.32em] uppercase text-foreground/80 mb-4">Settings</h2>
+      {/* Sovereignty Hub — Tactile Sovereignty settings + Vaporize kill switch */}
+      <SovereigntyHub
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onPurged={() => {
+          setSettingsOpen(false);
+          setMessages([]);
+          setDraft("");
+          setBurned(false);
+          onPurged?.();
+        }}
+      />
 
-              <div className="flex items-center justify-between py-3">
-                <div className="flex items-start gap-3">
-                  <Flame className="w-4 h-4 mt-0.5 text-foreground/70" strokeWidth={1.75} />
-                  <div>
-                    <div className="text-[13px] text-foreground/90">Burn Narrative History</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5 max-w-[260px]">
-                      Permanently clear this session's narrative. Encryption keys rotated.
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setBurnConfirmOpen(true)}
-                  aria-label="Burn narrative history"
-                  className="px-3 h-8 rounded-full text-[10px] tracking-[0.22em] uppercase transition-colors"
-                  style={{
-                    background: "rgba(220, 38, 38, 0.12)",
-                    border: "1px solid rgba(220, 38, 38, 0.35)",
-                    color: "#FCA5A5",
-                  }}
-                >
-                  Burn
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Intervention Modal — Human Fail-Safe for the Muted Plum state */}
+      <InterventionModal
+        open={interventionOpen}
+        onClose={() => {
+          setInterventionOpen(false);
+          setInterventionDismissed(true);
+        }}
+      />
 
       {/* Burn confirmation */}
       <AnimatePresence>
