@@ -1,22 +1,16 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ShieldCheck, ArrowRight } from "lucide-react";
-import ResilienceWave from "./ResilienceWave";
 
 /**
- * Onboarding — 3-screen Trust & Calibration ritual.
+ * Onboarding — 2-screen Trust ritual.
  *
- *   1. The Promise        →  "A sanctuary for your narrative."
- *   2. The Privacy        →  "Localized Sovereignty." (NDPR · Lagos)
- *   3. The Calibration    →  5-second Haptic Hold; ResilienceWave forms
+ *   1. The Promise   →  "A sanctuary for your narrative."
+ *   2. The Privacy   →  "Localized Sovereignty." (NDPR · Lagos)
  *
- * On completion calls onComplete() which mounts the main SafeHavenChat.
- *
- * NOTE: This screen reuses the existing ResilienceWave component for
- * the calibration visual — no duplicate wave engine is introduced.
+ * Calibration / "Setting the Baseline" screen has been removed.
  */
 
-const HOLD_MS = 5000;
 const EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
 
 interface OnboardingProps {
@@ -30,13 +24,13 @@ const PAGE_VARIANTS = {
 };
 
 const Onboarding = ({ onComplete }: OnboardingProps) => {
-  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [step, setStep] = useState<0 | 1>(0);
 
   return (
     <div className="fixed inset-0 z-40 nexilo-shell-bg flex flex-col items-center justify-center overflow-hidden select-none">
       {/* Subtle progress dots */}
       <div className="absolute top-[max(env(safe-area-inset-top),1.25rem)] left-0 right-0 flex justify-center gap-2">
-        {[0, 1, 2].map((i) => (
+        {[0, 1].map((i) => (
           <span
             key={i}
             className="block h-[3px] rounded-full transition-all duration-500"
@@ -54,10 +48,7 @@ const Onboarding = ({ onComplete }: OnboardingProps) => {
           <PromiseScreen key="promise" onNext={() => setStep(1)} />
         )}
         {step === 1 && (
-          <PrivacyScreen key="privacy" onNext={() => setStep(2)} />
-        )}
-        {step === 2 && (
-          <CalibrationScreen key="calibration" onComplete={onComplete} />
+          <PrivacyScreen key="privacy" onNext={onComplete} />
         )}
       </AnimatePresence>
     </div>
